@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-unimate}
+      POSTGRES_USER: ${POSTGRES_USER:-unimate}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-unimate_pass}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  web:
+    build: ./
+    depends_on:
+      - db
+    environment:
+      DJANGO_DEBUG: "True"
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-changeme}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-unimate}
+      POSTGRES_USER: ${POSTGRES_USER:-unimate}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-unimate_pass}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/app
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+
+volumes:
+  db_data:
